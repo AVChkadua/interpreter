@@ -1,34 +1,36 @@
 grammar Lang;
+@header {
+package ru.mephi.interpreter.generated;
+}
 main: sentence*;
-sentence: LEFT SEMI NEWLINE
-    | RIGHT SEMI NEWLINE
-    | TOP SEMI NEWLINE
-    | BOTTOM SEMI NEWLINE
-    | forEach
-    | declarePointer SEMI NEWLINE
-    | declareVariable SEMI NEWLINE
-    | declareArray SEMI NEWLINE
-    | whileCycle
-    | zero
-    | notZero
-    | assign SEMI NEWLINE
-    | function
-    | functionCall SEMI NEWLINE;
-expr: '$' variable
-    | expr '*' expr
-    | expr '/' expr
-    | expr '%' expr
-    | expr '+' expr
-    | expr '-' expr
-    | value
-    | expr '!=' expr
-    | expr '<=' expr
-    | expr '>=' expr
-    | '(' expr ')'
-    | functionCall;
+sentence: forEach #ForEachCycle
+    | declarePointer SEMI NEWLINE #PointerDeclaration
+    | declareVariable SEMI NEWLINE #VariableDeclaration
+    | declareArray SEMI NEWLINE #ArrayDeclaration
+    | whileCycling #WhileCycle
+    | zero #IfZero
+    | notZero #IfNotZero
+    | assign SEMI NEWLINE #Assigning
+    | funcImpl #FunctionImplementation
+    | funcCall SEMI NEWLINE #FunctionCall
+    | LEFT SEMI NEWLINE #MoveLeft
+    | RIGHT SEMI NEWLINE #MoveRight
+    | TOP SEMI NEWLINE #MoveTop
+    | BOTTOM SEMI NEWLINE #MoveBottom
+    ;
+expr: '(' expr ')' #BracedExpr
+    | '$' variable #Length
+    | expr op=('*'|'/'|'%') expr #MultiOp
+    | expr op=('+'|'-') expr #AddOp
+    | value #Const
+    | expr op=('!='|'<='|'>=') expr #Comparing
+    | funcCall #Call
+    ;
 assign: variable '=' expr;
 value: INT
-    | variable;
+    | arrayElement
+    | pointerValue
+    | pointerAddress;
 variable: NAME
     | arrayElement
     | pointerValue
@@ -51,14 +53,14 @@ whileDeclaration: WHILE '(' expr ')';
 finishDeclaration: FINISH;
 zeroDeclaration: ZERO '(' expr ')';
 notZeroDeclaration: NOT_ZERO '(' expr ')';
-forEach: FOR_EACH NAME functionCall SEMI NEWLINE;
-functionCall: NAME '(' (argument(', 'argument)*)? ')';
-functionDeclaration: TYPE NAME '(' (parameter(', ' parameter)*)? ')';
+forEach: FOR_EACH NAME func=funcCall SEMI NEWLINE;
+funcCall: NAME '(' (argument(', 'argument)*)? ')';
+functionDeclaration: TYPE funcName=NAME '(' (parameter(', ' parameter)*)? ')';
 body: '{' NEWLINE sentence* returnExpr '}';
-whileCycle: whileDeclaration NEWLINE body NEWLINE finishDeclaration NEWLINE body NEWLINE;
-zero: zeroDeclaration NEWLINE body NEWLINE;
-notZero: notZeroDeclaration NEWLINE body NEWLINE;
-function: functionDeclaration NEWLINE body NEWLINE;
+whileCycling: whileDeclaration NEWLINE body NEWLINE finishDeclaration NEWLINE body NEWLINE;
+zero: zeroCond=zeroDeclaration NEWLINE body NEWLINE;
+notZero: notZeroCond=notZeroDeclaration NEWLINE body NEWLINE;
+funcImpl: functionDeclaration NEWLINE body NEWLINE;
 parameter: TYPE NAME;
 returnExpr: RETURN expr SEMI NEWLINE;
 SPACE: (' ')+ {skip();};
