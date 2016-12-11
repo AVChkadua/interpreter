@@ -7,13 +7,12 @@ import java.text.ParseException;
  */
 public class Pointer {
     private int address;
-    private MemoryEmulator memory;
+    private MemoryEmulator memory = MemoryEmulator.getInstance();
     private boolean constantAddress;
     private boolean constantValue;
 
     public Pointer(int address, boolean constantAddress, boolean constantValue) {
         this.address = address;
-        this.memory = MemoryEmulator.getInstance();
         this.constantAddress = constantAddress;
         this.constantValue = constantValue;
     }
@@ -22,26 +21,17 @@ public class Pointer {
         return address;
     }
 
-    public Byte getByte(Integer address)
-    {
-        return memory.getByte(address);
+    public int getValue(Integer address) {
+        return memory.getValue(address);
     }
 
-    public Integer getInt(Integer address) {
-        return memory.getInt(address);
-    }
-
-    public Long getLong(Integer address) {
-        return memory.getLong(address);
-    }
-
-    public void setAddress(int address) {
-        if (constantAddress) throw new IllegalStateException();
+    public void setAddress(int address) throws RuntimeLangException {
+        if (constantAddress) throw new RuntimeLangException(RuntimeLangException.Type.ILLEGAL_MODIFICATION);
         this.address = address;
     }
 
-    public void setValue(String value) throws ParseException {
-        if (constantValue) throw new IllegalStateException();
+    public void setValue(int value) throws ParseException, RuntimeLangException {
+        if (constantValue) throw new RuntimeLangException(RuntimeLangException.Type.ILLEGAL_MODIFICATION);
         memory.put(value, address);
     }
 
