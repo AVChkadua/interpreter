@@ -12,7 +12,15 @@ public class CallStack {
     private final Map<Function, ParseTree> definitions = new HashMap<>();
     private final Deque<Function> current = new ArrayDeque<>();
 
-    private CallStack() {}
+    private CallStack() {
+    }
+
+    public static CallStack getInstance() {
+        if (INSTANCE == null) {
+            INSTANCE = new CallStack();
+        }
+        return INSTANCE;
+    }
 
     Function getFunction(String name, List<Class> types) throws RuntimeLangException {
         Function candidate =
@@ -22,8 +30,9 @@ public class CallStack {
             throw new RuntimeLangException(RuntimeLangException.Type.NO_SUCH_FUNCTION);
         }
         for (int i = 0; i < candidate.getArgs().size(); i++) {
-            if (!candidate.getArgs().get(i).getType().equals(types.get(i)))
+            if (!candidate.getArgs().get(i).getType().equals(types.get(i))) {
                 throw new RuntimeLangException(RuntimeLangException.Type.NO_SUCH_FUNCTION);
+            }
         }
         return candidate;
     }
@@ -38,13 +47,6 @@ public class CallStack {
 
     void addFunction(Function function) {
         current.addLast(function);
-    }
-
-    public static CallStack getInstance() {
-        if (INSTANCE == null) {
-            INSTANCE = new CallStack();
-        }
-        return INSTANCE;
     }
 
     void addDefinition(Function function, ParseTree tree) {

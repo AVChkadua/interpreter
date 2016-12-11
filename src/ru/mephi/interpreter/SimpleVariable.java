@@ -26,7 +26,7 @@ public class SimpleVariable
     }
 
     public void setValue(int value) throws RuntimeLangException {
-        if (isConstant) throw new RuntimeLangException(RuntimeLangException.Type.ILLEGAL_MODIFICATION);
+        if (constantValue) throw new RuntimeLangException(RuntimeLangException.Type.ILLEGAL_MODIFICATION);
         this.value = value;
     }
 }

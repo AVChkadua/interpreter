@@ -23,7 +23,7 @@ public class Argument {
 
     @Override
     public boolean equals(Object obj) {
-        return obj instanceof Argument && name.equals(((Argument) obj).getName());
+        return obj instanceof Argument && name.equals(((Argument)obj).getName());
     }
 
     @Override

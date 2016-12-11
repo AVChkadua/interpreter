@@ -22,8 +22,13 @@ public class Scope {
         variables.add(variable);
     }
 
+    public Scope getParent() {
+        return parent;
+    }
+
     Variable get(String name) throws RuntimeLangException {
-        Variable candidate = variables.stream().filter(variable -> variable.getName().equals(name)).findAny().orElseGet(null);
+        Variable candidate =
+                variables.stream().filter(variable -> variable.getName().equals(name)).findAny().orElseGet(null);
         if (candidate == null) {
             if (parent != null) {
                 parent.get(name);

@@ -6,11 +6,11 @@ package ru.mephi.interpreter;
 public abstract class Variable
         extends Argument {
 
-    final boolean isConstant;
+    final boolean constantValue;
 
-    protected Variable(String name, Class type, boolean isConstant) {
+    protected Variable(String name, Class type, boolean constantValue) {
         super(name, type);
-        this.isConstant = isConstant;
+        this.constantValue = constantValue;
     }
 
     abstract int getLength();

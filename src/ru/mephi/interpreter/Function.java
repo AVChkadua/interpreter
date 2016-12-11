@@ -1,18 +1,22 @@
 package ru.mephi.interpreter;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Stream;
 
 /**
  * @author Anton_Chkadua
  */
 public class Function {
+    Scope scope;
+    private Class returnType;
     private String name;
     private int line = 0;
-    private List<Argument> args;
-    Scope scope;
+    private List<Argument> args = new ArrayList<>();
 
-    Function(String name, List<Argument> args, Scope parentScope) throws RuntimeLangException {
+    Function(String name, Class returnType, List<Argument> args, Scope parentScope) throws RuntimeLangException {
         this.name = name;
+        this.returnType = returnType;
         if (args.stream().distinct().count() != args.size()) {
             throw new RuntimeLangException(RuntimeLangException.Type.DUPLICATE_IDENTIFIER);
         }
@@ -36,14 +40,12 @@ public class Function {
         if (args.length != this.args.size()) {
             throw new RuntimeLangException(RuntimeLangException.Type.NO_SUCH_FUNCTION);
         }
+        if (!Stream.of(args).allMatch(variable -> variable instanceof SimpleVariable)) {
+            throw new RuntimeLangException(RuntimeLangException.Type.NO_SUCH_FUNCTION);
+        }
         for (int i = 0; i < args.length; i++) {
-            if (args[i] instanceof SimpleVariable) {
-                scope.add(new SimpleVariable(this.args.get(i).name, this.args.get(i).type, args[i].getValue(),
-                        args[i].isConstant));
-            } else if (args[i] instanceof Array) {
-                scope.add(new Array(this.args.get(i).name, this.args.get(i).type, args[i].getLength(),
-                        false));
-            }
+            scope.add(new SimpleVariable(this.args.get(i).name, this.args.get(i).type, args[i].getValue(),
+                    args[i].constantValue));
         }
     }
 }

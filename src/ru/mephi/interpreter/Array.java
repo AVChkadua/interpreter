@@ -5,7 +5,8 @@ import java.util.ArrayList;
 /**
  * @author Anton_Chkadua
  */
-public class Array extends Variable {
+public class Array
+        extends Variable {
 
     ArrayList<Variable> content;
     private int quant = 4;

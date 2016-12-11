@@ -8,10 +8,11 @@ import java.util.Map;
  */
 public class MemoryEmulator {
 
-    private Map<Integer, Integer> map = new HashMap<>();
     private static MemoryEmulator INSTANCE = null;
+    private Map<Integer, Integer> map = new HashMap<>();
 
-    private MemoryEmulator() {}
+    private MemoryEmulator() {
+    }
 
     public static MemoryEmulator getInstance() {
         if (INSTANCE == null) {
@@ -24,8 +25,7 @@ public class MemoryEmulator {
         map.put(address, value);
     }
 
-    public int getValue(int address)
-    {
+    public int getValue(int address) {
         return map.get(address);
     }
 }
