@@ -10,101 +10,97 @@ import java.util.List;
  * @author Anton_Chkadua
  */
 public class TreeVisitor
-        extends LangBaseVisitor<Integer> {
+        extends LangBaseVisitor<String> {
 
-    Scope currentScope;
+    Scope currentScope = Scope.GLOBAL;
     boolean continueParsing = true;
 
     @Override
-    public Integer visitMoveLeft(LangParser.MoveLeftContext ctx) {
+    public String visitMoveLeft(LangParser.MoveLeftContext ctx) {
         // TODO
         return null;
     }
 
     @Override
-    public Integer visitMoveRight(LangParser.MoveRightContext ctx) {
+    public String visitMoveRight(LangParser.MoveRightContext ctx) {
         // TODO
         return null;
     }
 
     @Override
-    public Integer visitMoveTop(LangParser.MoveTopContext ctx) {
+    public String visitMoveTop(LangParser.MoveTopContext ctx) {
         // TODO
         return null;
     }
 
     @Override
-    public Integer visitMoveBottom(LangParser.MoveBottomContext ctx) {
+    public String visitMoveBottom(LangParser.MoveBottomContext ctx) {
         // TODO
         return null;
     }
 
     @Override
-    public Integer visitAddOp(LangParser.AddOpContext ctx) {
+    public String visitAddOp(LangParser.AddOpContext ctx) {
         if (ctx.op.getText().equals("+")) {
-            return visit(ctx.getChild(0)) + visit(ctx.getChild(1));
+            return toS(toI(visit(ctx.getChild(0))) + toI(visit(ctx.getChild(1))));
         } else if (ctx.op.getText().equals("-")) {
-            return visit(ctx.getChild(0)) - visit(ctx.getChild(1));
+            return toS(toI(visit(ctx.getChild(0))) - toI(visit(ctx.getChild(1))));
         }
         return null;
     }
 
     @Override
-    public Integer visitMultiOp(LangParser.MultiOpContext ctx) {
+    public String visitMultiOp(LangParser.MultiOpContext ctx) {
         if (ctx.op.getText().equals("*")) {
-            return visit(ctx.getChild(0)) * visit(ctx.getChild(1));
+            return toS(toI(visit(ctx.getChild(0))) * toI(visit(ctx.getChild(1))));
         } else if (ctx.op.getText().equals("/")) {
-            return visit(ctx.getChild(0)) / visit(ctx.getChild(1));
+            return toS(toI(visit(ctx.getChild(0))) / toI(visit(ctx.getChild(1))));
         } else if (ctx.op.getText().equals("%")) {
-            return visit(ctx.getChild(0)) % visit(ctx.getChild(1));
+            return toS(toI(visit(ctx.getChild(0))) % toI(visit(ctx.getChild(1))));
         }
         return null;
     }
 
     @Override
-    public Integer visitLength(LangParser.LengthContext ctx) {
+    public String visitLength(LangParser.LengthContext ctx) {
         try {
-            return currentScope.get(ctx.getChild(1).getText()).getLength();
+            return toS(getVariable(ctx.getChild(1).getText()).getLength());
         } catch (RuntimeLangException e) {
             System.out.println(e.getType());
             continueParsing = false;
         }
-        return 1;
+        return "1";
     }
 
     @Override
-    public Integer visitComparing(LangParser.ComparingContext ctx) {
+    public String visitComparing(LangParser.ComparingContext ctx) {
         if (ctx.op.getText().equals("==")) {
-            return visit(ctx.getChild(0)) == visit(ctx.getChild(1)) ? 1 : 0;
+            return toS(toI(visit(ctx.getChild(0))) == toI(visit(ctx.getChild(1))) ? 1 : 0);
         } else if (ctx.op.getText().equals("!=")) {
-            return visit(ctx.getChild(0)) != visit(ctx.getChild(1)) ? 1 : 0;
+            return toS(toI(visit(ctx.getChild(0))) != toI(visit(ctx.getChild(1))) ? 1 : 0);
         } else if (ctx.op.getText().equals("<=")) {
-            return visit(ctx.getChild(0)) <= visit(ctx.getChild(1)) ? 1 : 0;
+            return toS(toI(visit(ctx.getChild(0))) <= toI(visit(ctx.getChild(1))) ? 1 : 0);
         } else if (ctx.op.getText().equals(">=")) {
-            return visit(ctx.getChild(0)) >= visit(ctx.getChild(1)) ? 1 : 0;
+            return toS(toI(visit(ctx.getChild(0))) >= toI(visit(ctx.getChild(1))) ? 1 : 0);
         }
         return null;
     }
 
     @Override
-    public Integer visitAssign(LangParser.AssignContext ctx) {
-        visit(ctx.getChild(0));
-        Variable variable;
+    public String visitExistingVariable(LangParser.ExistingVariableContext ctx) {
         try {
-            if (ctx.getChild(0).getText().contains("[")) {
-                variable = getVariable(ctx.getChild(ctx.getChildCount() - 1).getText());
-                if (variable instanceof SimpleVariable) {
-                    ((SimpleVariable)variable).setValue(visit(ctx.getChild(2)));
-                } else if (variable instanceof Pointer) {
-                    if (ctx.getChild(0).getChild(0).getText().equals("*")) {
-                        ((Pointer)variable).setValue(visit(ctx.getChild(2)));
-                    } else {
-                        ((Pointer)variable).setAddress(visit(ctx.getChild(2)));
-                    }
+            Variable variable = getVariable(visit(ctx.getChild(0).getChild(0)));
+            if (ctx.getChild(0).getChild(0).getText().contains("[")) {
+                String[] buf = ctx.getChild(0).getChild(0).getText().split("\\[");
+                List<Integer> indexes = new ArrayList<>();
+                for (int i = 1; i < buf.length; i++) {
+                    indexes.add(toI(buf[i].replace("]", "")));
                 }
-            } else {
-                // TODO getting array element
+                for (Integer index : indexes) {
+                    variable = variable.getElement(index);
+                }
             }
+            variable.setValue(toI(visit(ctx.getChild(0).getChild(2))));
         } catch (RuntimeLangException e) {
             System.out.println(e.getType());
             continueParsing = false;
@@ -113,54 +109,107 @@ public class TreeVisitor
     }
 
     @Override
-    public Integer visitConstValue(LangParser.ConstValueContext ctx) {
-        return Integer.parseInt(ctx.getText());
-    }
-
-    @Override
-    public Integer visitArrayElementValue(LangParser.ArrayElementValueContext ctx) {
+    public String visitJustDeclaredPointer(LangParser.JustDeclaredPointerContext ctx) {
+        Integer value = toI(visit(ctx.getChild(2)));
+        Class type = getVariableClass(ctx.getChild(0).getChild(ctx.getChild(0).getChildCount() - 2).getText());
+        boolean constAddress = ctx.getChild(0).getChild(0).getText().toLowerCase().equals("const");
+        boolean constValue =
+                ctx.getChild(0).getChild(1 + (constAddress ? 1 : 0)).getText().toLowerCase().equals("const");
+        int childCount = ctx.getChild(0).getChildCount() - 1;
         try {
-            return getVariable(ctx.getChild(0).getText()).getElement(visit(ctx.getChild(1))).getValue();
+            currentScope.add(new Pointer(ctx.getChild(0).getChild(childCount).getText(), type, constValue, value,
+                    constAddress));
         } catch (RuntimeLangException e) {
             System.out.println(e.getType());
             continueParsing = false;
         }
-        return 0;
+        return null;
     }
 
     @Override
-    public Integer visitPointerValueValue(LangParser.PointerValueValueContext ctx) {
+    public String visitJustDeclaredVariable(LangParser.JustDeclaredVariableContext ctx) {
+        boolean isConstant = ctx.getChild(0).getChild(0).getText().toLowerCase().equals("const");
+        Class type = getVariableClass(ctx.getChild(0).getChild(ctx.getChild(0).getChildCount() - 2).getText());
+        Integer value = toI(visit(ctx.getChild(2)));
         try {
-            return getVariable(ctx.getChild(1).getText()).getValue();
+            currentScope.add(new SimpleVariable(ctx.getChild(0).getChild(ctx.getChild(0).getChildCount() - 1).getText(),
+                    type, value, isConstant));
         } catch (RuntimeLangException e) {
             System.out.println(e.getType());
             continueParsing = false;
         }
-        return 0;
+        return null;
     }
 
     @Override
-    public Integer visitPointerAddressValue(LangParser.PointerAddressValueContext ctx) {
+    public String visitJustDeclaredArray(LangParser.JustDeclaredArrayContext ctx) {
+        Integer size = toI(visit(ctx.getChild(2)));
+        boolean constSize = ctx.getChild(0).getChild(0).getText().toLowerCase().equals("const");
+        Class type = getVariableClass(ctx.getChild(0).getChild(ctx.getChild(0).getChildCount() - 2).getText());
+        try {
+            currentScope.add(new Array(ctx.getChild(0).getChild(ctx.getChild(0).getChildCount() - 1).getText(), type,
+                    size, constSize));
+        } catch (RuntimeLangException e) {
+            System.out.println(e.getType());
+            continueParsing = false;
+        }
+        return null;
+    }
+
+    @Override
+    public String visitConstValue(LangParser.ConstValueContext ctx) {
+        return ctx.getText();
+    }
+
+    @Override
+    public String visitArrayElementValue(LangParser.ArrayElementValueContext ctx) {
+        // TODO
+        try {
+            return toS(getVariable(ctx.getChild(0).getText()).getElement(toI(visit(ctx.getChild(1)))).getValue());
+        } catch (RuntimeLangException e) {
+            System.out.println(e.getType());
+            continueParsing = false;
+        }
+        return "0";
+    }
+
+    @Override
+    public String visitPointerValueValue(LangParser.PointerValueValueContext ctx) {
+        // TODO
+        try {
+            return toS(getVariable(ctx.getChild(1).getText()).getValue());
+        } catch (RuntimeLangException e) {
+            System.out.println(e.getType());
+            continueParsing = false;
+        }
+        return "0";
+    }
+
+    @Override
+    public String visitPointerAddressValue(LangParser.PointerAddressValueContext ctx) {
+        // TODO
         Variable variable;
         try {
             variable = getVariable(ctx.getChild(1).getText());
             if (!(variable instanceof Pointer)) {
                 throw new RuntimeLangException(RuntimeLangException.Type.NO_SUCH_VARIABLE);
             }
-            return ((Pointer)variable).getAddress();
+            return toS(((Pointer)variable).getAddress());
         } catch (RuntimeLangException e) {
             System.out.println(e.getType());
             continueParsing = false;
         }
-        return 0;
+        return "0";
     }
 
     @Override
-    public Integer visitDeclareVariable(LangParser.DeclareVariableContext ctx) {
-        Class type = getVariableClass(ctx.getChild(ctx.getChildCount() - 2).getText());
+    public String visitVariableDeclaration(LangParser.VariableDeclarationContext ctx) {
+        boolean isConstant = ctx.getChild(0).getChild(0).getText().toLowerCase().equals("const");
+        Class type = getVariableClass(ctx.getChild(0).getChild(ctx.getChild(0).getChildCount() - 2).getText());
+
         try {
-            currentScope.add(new SimpleVariable(ctx.getChild(ctx.getChildCount() - 1).getText(), type, 0,
-                    ctx.getChild(0).getText().toLowerCase().equals("const")));
+            currentScope.add(new SimpleVariable(ctx.getChild(0).getChild(ctx.getChild(0).getChildCount() - 1).getText(),
+                    type, null, isConstant));
         } catch (RuntimeLangException e) {
             System.out.println(e.getType());
             continueParsing = false;
@@ -169,13 +218,15 @@ public class TreeVisitor
     }
 
     @Override
-    public Integer visitDeclarePointer(LangParser.DeclarePointerContext ctx) {
-        Class type = getVariableClass(ctx.getChild(ctx.getChildCount() - 2).getText());
-        boolean constAddress = ctx.getChild(0).getText().toLowerCase().equals("const");
-        boolean constValue = ctx.getChild(1 + (constAddress ? 1 : 0)).getText().toLowerCase().equals("const");
-        int childCount = ctx.getChildCount();
+    public String visitPointerDeclaration(LangParser.PointerDeclarationContext ctx) {
+        Class type = getVariableClass(ctx.getChild(0).getChild(ctx.getChild(0).getChildCount() - 2).getText());
+        boolean constAddress = ctx.getChild(0).getChild(0).getText().toLowerCase().equals("const");
+        boolean constValue =
+                ctx.getChild(0).getChild(1 + (constAddress ? 1 : 0)).getText().toLowerCase().equals("const");
+        int childCount = ctx.getChild(0).getChildCount() - 1;
         try {
-            currentScope.add(new Pointer(ctx.getChild(childCount - 1).getText(), type, constValue, -1, constAddress));
+            currentScope.add(new Pointer(ctx.getChild(0).getChild(childCount).getText(), type, constValue, null,
+                    constAddress));
         } catch (RuntimeLangException e) {
             System.out.println(e.getType());
             continueParsing = false;
@@ -184,29 +235,32 @@ public class TreeVisitor
     }
 
     @Override
-    public Integer visitDeclareArray(LangParser.DeclareArrayContext ctx) {
-        boolean constSize = ctx.getChild(0).getText().toLowerCase().equals("const");
-        Class type = getVariableClass(ctx.getChild(ctx.getChildCount() - 3).getText());
+    public String visitArrayDeclaration(LangParser.ArrayDeclarationContext ctx) {
+        boolean constSize = ctx.getChild(0).getChild(0).getText().toLowerCase().equals("const");
+        Class type = getVariableClass(ctx.getChild(0).getChild(ctx.getChild(0).getChildCount() - 2).getText());
         try {
-            currentScope.add(new Array(ctx.getChild(ctx.getChildCount() - 1).getText(), type, visitChildren(ctx),
-                    constSize));
+            currentScope
+                    .add(new Array(ctx.getChild(0).getChild(ctx.getChild(0).getChildCount() - 1).getText(), type, null,
+                            constSize));
         } catch (RuntimeLangException e) {
             System.out.println(e.getType());
             continueParsing = false;
         }
+        System.out.println(currentScope);
         return null;
     }
 
     @Override
-    public Integer visitIndex(LangParser.IndexContext ctx) {
+    public String visitIndex(LangParser.IndexContext ctx) {
         return visit(ctx.getChild(1));
     }
 
     @Override
-    public Integer visitForEach(LangParser.ForEachContext ctx) {
+    public String visitForEach(LangParser.ForEachContext ctx) {
+        // TODO
         Variable variable = null;
         try {
-            variable = getVariable(ctx.getChild(0).getText());
+            variable = getVariable(ctx.getChild(0).getChild(0).getText());
         } catch (RuntimeLangException e) {
             System.out.println(e.getType());
             continueParsing = false;
@@ -232,7 +286,7 @@ public class TreeVisitor
     }
 
     @Override
-    public Integer visitFuncCall(LangParser.FuncCallContext ctx) {
+    public String visitFuncCall(LangParser.FuncCallContext ctx) {
         // TODO result returning
         currentScope = new Scope(currentScope);
         int result = 0;
@@ -246,7 +300,7 @@ public class TreeVisitor
                 System.out.println(e.getType());
                 continueParsing = false;
                 currentScope = currentScope.getParent();
-                return result;
+                return toS(result);
             }
         }
         try {
@@ -256,11 +310,11 @@ public class TreeVisitor
             System.out.println(e.getType());
             continueParsing = false;
         }
-        return result;
+        return toS(result);
     }
 
     @Override
-    public Integer visitFunctionDeclaration(LangParser.FunctionDeclarationContext ctx) {
+    public String visitFunctionDeclaration(LangParser.FunctionDeclarationContext ctx) {
         List<Argument> args = new ArrayList<>();
         for (int i = 2; i < ctx.getChildCount() - 1; i += 2) {
             args.add(new Argument(ctx.getChild(i).getChild(1).getText(),
@@ -277,11 +331,11 @@ public class TreeVisitor
     }
 
     @Override
-    public Integer visitBody(LangParser.BodyContext ctx) {
+    public String visitBody(LangParser.BodyContext ctx) {
         currentScope = new Scope(currentScope);
         for (int i = 0; i < ctx.getChildCount(); i++) {
             if (ctx.getChild(i).getText().toLowerCase().equals("break")) {
-                return 0;
+                return null;
             }
             visit(ctx.getChild(i));
         }
@@ -289,34 +343,46 @@ public class TreeVisitor
     }
 
     @Override
-    public Integer visitWhileCycling(LangParser.WhileCyclingContext ctx) {
-        while (visit(ctx.getChild(0)) == 1) {
-            visit(ctx.getChild(2));
+    public String visitWhileCycle(LangParser.WhileCycleContext ctx) {
+        currentScope = new Scope(currentScope);
+        while (visit(ctx.getChild(0).getChild(0).getChild(2)).equals("1")) {
+            visit(ctx.getChild(0).getChild(1));
         }
-        visit(ctx.getChild(4));
-        return null;
-    }
-
-    @Override
-    public Integer visitZero(LangParser.ZeroContext ctx) {
-        if (visit(ctx.zeroCond) == 1) {
-            visit(ctx.getChild(2));
-        }
-        return null;
-    }
-
-    @Override
-    public Integer visitNotZero(LangParser.NotZeroContext ctx) {
-        if (visit(ctx.notZeroCond) == 1) {
-            visit(ctx.getChild(2));
-        }
-        return null;
-    }
-
-    @Override
-    public Integer visitBreaking(LangParser.BreakingContext ctx) {
         currentScope = currentScope.getParent();
-        return 0;
+        visit(ctx.getChild(0).getChild(3));
+        return null;
+    }
+
+    @Override
+    public String visitIfZero(LangParser.IfZeroContext ctx) {
+        currentScope = new Scope(currentScope);
+        if (visit(ctx.getChild(0).getChild(0).getChild(2)).equals("0")) {
+            visit(ctx.getChild(0).getChild(1));
+        }
+        currentScope = currentScope.getParent();
+        return null;
+    }
+
+    @Override
+    public String visitIfNotZero(LangParser.IfNotZeroContext ctx) {
+        currentScope = new Scope(currentScope);
+        if (visit(ctx.getChild(0).getChild(0).getChild(2)).equals("0")) {
+            visit(ctx.getChild(0).getChild(1));
+        }
+        currentScope = currentScope.getParent();
+        return null;
+    }
+
+    @Override
+    public String visitBreaking(LangParser.BreakingContext ctx) {
+        currentScope = currentScope.getParent();
+        return null;
+    }
+
+    @Override
+    public String visitReturning(LangParser.ReturningContext ctx) {
+        // TODO
+        return visit(ctx.getChild(0).getChild(1));
     }
 
     private Variable getVariable(String name) throws RuntimeLangException {
@@ -332,12 +398,21 @@ public class TreeVisitor
             case "byte":
                 return Byte.class;
         }
-        System.out.println("No such type");
+        // TODO throw exception here
+        System.out.println("No such type: " + string);
         continueParsing = false;
         return Integer.class;
     }
 
     private Function getFunction(String name, List<Class> types) throws RuntimeLangException {
         return CallStack.getInstance().getFunction(name, types);
+    }
+
+    private int toI(String s) {
+        return Integer.valueOf(s);
+    }
+
+    private String toS(int i) {
+        return String.valueOf(i);
     }
 }

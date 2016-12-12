@@ -15,7 +15,9 @@ public abstract class Variable
 
     abstract int getLength();
 
-    abstract int getValue() throws RuntimeLangException;
+    abstract Integer getValue() throws RuntimeLangException;
+
+    abstract void setValue(int value) throws RuntimeLangException;
 
     abstract Variable getElement(int i) throws RuntimeLangException;
 }

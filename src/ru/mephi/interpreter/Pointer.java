@@ -5,15 +5,15 @@ package ru.mephi.interpreter;
  */
 public class Pointer
         extends Variable {
-    private int address;
+    private Integer address;
     private MemoryEmulator memory = MemoryEmulator.getInstance();
     private boolean constantAddress;
 
-    public Pointer(String name, Class type, boolean constantValue, int address, boolean constantAddress)
+    public Pointer(String name, Class type, boolean constantValue, Integer address, boolean constantAddress)
             throws RuntimeLangException {
         super(name, type, constantValue);
-        if (constantAddress && address == -1) {
-            throw new RuntimeLangException(RuntimeLangException.Type.ILLEGAL_MODIFICATION);
+        if (constantAddress && address == null) {
+            throw new RuntimeLangException(RuntimeLangException.Type.NO_VALUE_SPECIFIED);
         }
         this.address = address;
         this.constantAddress = constantAddress;
@@ -29,10 +29,11 @@ public class Pointer
     }
 
     @Override
-    public int getValue() throws RuntimeLangException {
+    public Integer getValue() throws RuntimeLangException {
         return memory.getValue(address);
     }
 
+    @Override
     public void setValue(int value) throws RuntimeLangException {
         if (constantValue) throw new RuntimeLangException(RuntimeLangException.Type.ILLEGAL_MODIFICATION);
         memory.put(value, address);

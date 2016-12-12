@@ -3,51 +3,55 @@ grammar Lang;
 package ru.mephi.interpreter.generated;
 }
 main: sentence*;
-sentence: forEach #ForEachCycle
-    | declarePointer SEMI NEWLINE #PointerDeclaration
-    | declareVariable SEMI NEWLINE #VariableDeclaration
-    | declareArray SEMI NEWLINE #ArrayDeclaration
+sentence: assign SEMI #Assigning
+    | forEach #ForEachCycle
+    | declarePointer SEMI #PointerDeclaration
+    | declareVariable SEMI #VariableDeclaration
+    | declareArray SEMI #ArrayDeclaration
     | whileCycling #WhileCycle
     | zero #IfZero
     | notZero #IfNotZero
-    | assign SEMI NEWLINE #Assigning
     | funcImpl #FunctionImplementation
-    | funcCall SEMI NEWLINE #FunctionCall
-    | LEFT SEMI NEWLINE #MoveLeft
-    | RIGHT SEMI NEWLINE #MoveRight
-    | TOP SEMI NEWLINE #MoveTop
-    | BOTTOM SEMI NEWLINE #MoveBottom
-    | BREAK SEMI NEWLINE #Breaking
+    | funcCall SEMI #FunctionCall
+    | LEFT SEMI #MoveLeft
+    | RIGHT SEMI #MoveRight
+    | TOP SEMI #MoveTop
+    | BOTTOM SEMI #MoveBottom
+    | BREAK SEMI #Breaking
     | returnExpr #Returning
+    | body #BodyPart
     ;
 expr: '(' expr ')' #BracedExpr
-    | '$' variable #Length
+    | '$' variableWithLength #Length
     | expr op=('*'|'/'|'%') expr #MultiOp
     | expr op=('+'|'-') expr #AddOp
     | value #Const
     | expr op=('!='|'<='|'>='|'==') expr #Comparing
     | funcCall #Call
     ;
-assign: variable '=' expr;
+assign: declareVariable '=' expr #JustDeclaredVariable
+    | declarePointer '=' expr #JustDeclaredPointer
+    | declareArray '=' expr #JustDeclaredArray
+    | variable '=' expr #ExistingVariable
+    ;
 value: INT #ConstValue
     | arrayElement #ArrayElementValue
     | pointerValue #PointerValueValue
     | pointerAddress #PointerAddressValue
     ;
+variableWithLength: NAME;
 variable: NAME #NamedVariable
     | arrayElement #ArrayElementVariable
     | pointerValue #PointerValueVariable
     | pointerAddress #PointerAddressVariable
-    | declareVariable #DeclaredVariable
-    | declarePointer #DeclaredPointer
     ;
 argument: INT
     | arrayElement
     | pointerValue
     | pointerAddress;
 declareVariable: CONST? VALUE TYPE NAME;
-declarePointer: CONST? POINTER CONST? TYPE? NAME;
-declareArray: CONST? ARRAY_OF TYPE NAME index;
+declarePointer: CONST? POINTER CONST? TYPE NAME;
+declareArray: CONST? ARRAY_OF TYPE NAME;
 pointerValue: '*' NAME;
 pointerAddress: '&' NAME
     | NAME;
@@ -57,16 +61,16 @@ whileDeclaration: WHILE '(' expr ')';
 finishDeclaration: FINISH;
 zeroDeclaration: ZERO '(' expr ')';
 notZeroDeclaration: NOT_ZERO '(' expr ')';
-forEach: FOR_EACH NAME func=funcCall SEMI NEWLINE;
+forEach: FOR_EACH NAME func=funcCall SEMI;
 funcCall: NAME '(' (argument(', 'argument)*)? ')';
 functionDeclaration: TYPE funcName=NAME '(' (parameter(', ' parameter)*)? ')';
-body: '{' NEWLINE sentence* '}';
-whileCycling: whileDeclaration NEWLINE body NEWLINE finishDeclaration NEWLINE body NEWLINE;
-zero: zeroCond=zeroDeclaration NEWLINE body NEWLINE;
-notZero: notZeroCond=notZeroDeclaration NEWLINE body NEWLINE;
-funcImpl: functionDeclaration NEWLINE body NEWLINE;
+body: '{' sentence* '}';
+whileCycling: whileDeclaration body finishDeclaration body;
+zero: zeroCond=zeroDeclaration body;
+notZero: notZeroCond=notZeroDeclaration body;
+funcImpl: functionDeclaration body;
 parameter: TYPE NAME;
-returnExpr: RETURN expr SEMI NEWLINE;
+returnExpr: RETURN expr SEMI;
 SPACE: (' ')+ {skip();};
 TYPE: 'int'
     | 'byte'
@@ -91,6 +95,6 @@ RETURN: 'return';
 BREAK: 'break';
 SEMI: ';';
 INT: [-]?[0-9]+;
-NEWLINE: [\r\n]+;
+NEWLINE: [\r\n]+ {skip();};
 NAME: [a-z][a-zA-Z0-9]*;
 

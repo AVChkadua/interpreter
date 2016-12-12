@@ -17,7 +17,7 @@ public class Array
             content = new ArrayList<>(size);
             quant = size;
         } else if (isConstant) {
-            throw new RuntimeLangException(RuntimeLangException.Type.INVALID_LENGTH);
+            throw new RuntimeLangException(RuntimeLangException.Type.NO_VALUE_SPECIFIED);
         } else {
             content = new ArrayList<>(4);
         }
@@ -29,8 +29,13 @@ public class Array
     }
 
     @Override
-    int getValue() throws RuntimeLangException {
+    Integer getValue() throws RuntimeLangException {
         throw new RuntimeLangException(RuntimeLangException.Type.INVALID_LENGTH);
+    }
+
+    @Override
+    void setValue(int value) throws RuntimeLangException {
+        throw new RuntimeLangException(RuntimeLangException.Type.ILLEGAL_MODIFICATION);
     }
 
     @Override

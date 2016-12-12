@@ -12,7 +12,7 @@ import java.io.IOException;
 public class Main {
 
     public static void main(String[] args) throws IOException {
-        ANTLRInputStream stream = new ANTLRFileStream(args[0]);
+        ANTLRInputStream stream = new ANTLRFileStream("/home/anton/prog");
         LangLexer lexer = new LangLexer(stream);
         CommonTokenStream tokens = new CommonTokenStream(lexer);
         LangParser parser = new LangParser(tokens);

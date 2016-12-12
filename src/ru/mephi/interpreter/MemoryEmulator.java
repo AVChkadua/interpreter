@@ -26,6 +26,6 @@ public class MemoryEmulator {
     }
 
     public int getValue(int address) {
-        return map.get(address);
+        return map.get(address) == null ? 0 : map.get(address);
     }
 }

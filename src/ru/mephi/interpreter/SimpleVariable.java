@@ -3,10 +3,11 @@ package ru.mephi.interpreter;
 public class SimpleVariable
         extends Variable {
 
-    private int value;
+    private Integer value;
 
-    SimpleVariable(String name, Class type, int value, boolean isConstant) {
+    SimpleVariable(String name, Class type, Integer value, boolean isConstant) throws RuntimeLangException {
         super(name, type, isConstant);
+        if (isConstant && value == null) throw new RuntimeLangException(RuntimeLangException.Type.NO_VALUE_SPECIFIED);
         this.value = value;
     }
 
@@ -21,10 +22,11 @@ public class SimpleVariable
     }
 
     @Override
-    public int getValue() {
+    public Integer getValue() {
         return value;
     }
 
+    @Override
     public void setValue(int value) throws RuntimeLangException {
         if (constantValue) throw new RuntimeLangException(RuntimeLangException.Type.ILLEGAL_MODIFICATION);
         this.value = value;
