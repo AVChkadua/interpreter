@@ -20,7 +20,8 @@ public class RuntimeLangException
         INVALID_LENGTH("Invalid length"), NO_SUCH_VARIABLE("No such variable found"),
         NO_SUCH_FUNCTION("No such function found"), DUPLICATE_IDENTIFIER("Duplicate identifier"),
         ILLEGAL_MODIFICATION("Illegal modification"), NO_SUCH_TYPE("No such type"),
-        NO_VALUE_SPECIFIED("No value specified for constant");
+        NO_VALUE_SPECIFIED("No value specified for constant"), ILLEGAL_ACCESS("Illegal access to variable"),
+        ILLEGAL_VALUE("Illegal value");
 
         String string;
 

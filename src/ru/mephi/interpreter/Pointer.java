@@ -1,15 +1,16 @@
 package ru.mephi.interpreter;
 
+import java.math.BigInteger;
+
 /**
  * @author Anton_Chkadua
  */
 public class Pointer
         extends Variable {
-    private Integer address;
-    private MemoryEmulator memory = MemoryEmulator.getInstance();
+    private BigInteger address;
     private boolean constantAddress;
 
-    public Pointer(String name, Class type, boolean constantValue, Integer address, boolean constantAddress)
+    Pointer(String name, Class type, boolean constantValue, BigInteger address, boolean constantAddress)
             throws RuntimeLangException {
         super(name, type, constantValue);
         if (constantAddress && address == null) {
@@ -19,33 +20,38 @@ public class Pointer
         this.constantAddress = constantAddress;
     }
 
-    public int getAddress() {
+    @Override
+    public BigInteger getAddress() throws RuntimeLangException {
+        throw new RuntimeLangException(RuntimeLangException.Type.ILLEGAL_ACCESS);
+    }
+
+    @Override
+    public void setAddress(BigInteger address) throws RuntimeLangException {
+        throw new RuntimeLangException(RuntimeLangException.Type.ILLEGAL_MODIFICATION);
+    }
+
+    @Override
+    public BigInteger getValue() throws RuntimeLangException {
         return address;
     }
 
-    public void setAddress(int address) throws RuntimeLangException {
+    @Override
+    public void setValue(BigInteger value) throws RuntimeLangException {
         if (constantAddress) throw new RuntimeLangException(RuntimeLangException.Type.ILLEGAL_MODIFICATION);
-        this.address = address;
     }
 
     @Override
-    public Integer getValue() throws RuntimeLangException {
-        return memory.getValue(address);
-    }
-
-    @Override
-    public void setValue(int value) throws RuntimeLangException {
-        if (constantValue) throw new RuntimeLangException(RuntimeLangException.Type.ILLEGAL_MODIFICATION);
-        memory.put(value, address);
-    }
-
-    @Override
-    public int getLength() {
-        return 1;
+    public BigInteger getLength() {
+        return BigInteger.ONE;
     }
 
     @Override
     Variable getElement(int i) throws RuntimeLangException {
         throw new RuntimeLangException(RuntimeLangException.Type.INVALID_LENGTH);
+    }
+
+    @Override
+    void setElement(int i, Variable value) throws RuntimeLangException {
+        throw new RuntimeLangException(RuntimeLangException.Type.ILLEGAL_MODIFICATION);
     }
 }

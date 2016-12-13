@@ -1,5 +1,6 @@
 package ru.mephi.interpreter;
 
+import java.math.BigInteger;
 import java.util.ArrayList;
 
 /**
@@ -24,23 +25,27 @@ public class Array
     }
 
     @Override
-    int getLength() {
-        return content.size();
+    BigInteger getLength() {
+        return BigInteger.valueOf(content.size());
     }
 
     @Override
-    Integer getValue() throws RuntimeLangException {
+    BigInteger getValue() throws RuntimeLangException {
         throw new RuntimeLangException(RuntimeLangException.Type.INVALID_LENGTH);
     }
 
     @Override
-    void setValue(int value) throws RuntimeLangException {
+    void setValue(BigInteger value) throws RuntimeLangException {
         throw new RuntimeLangException(RuntimeLangException.Type.ILLEGAL_MODIFICATION);
     }
 
     @Override
     Variable getElement(int i) throws RuntimeLangException {
         if (i > content.size()) throw new RuntimeLangException(RuntimeLangException.Type.INVALID_LENGTH);
+        if (i == content.size()) {
+            Variable newElement = new SimpleVariable("element", type, null, false);
+            content.add(newElement);
+        }
         Variable result = content.get(i);
         if (result == null) {
             throw new RuntimeLangException(RuntimeLangException.Type.INVALID_LENGTH);
@@ -48,6 +53,7 @@ public class Array
         return result;
     }
 
+    @Override
     void setElement(int i, Variable value) throws RuntimeLangException {
         if (!value.getClass().equals(type)) {
             throw new RuntimeLangException(RuntimeLangException.Type.ILLEGAL_MODIFICATION);
@@ -66,5 +72,15 @@ public class Array
 
     void addElement(Variable value) throws RuntimeLangException {
         setElement(content.size(), value);
+    }
+
+    @Override
+    BigInteger getAddress() throws RuntimeLangException {
+        throw new RuntimeException();
+    }
+
+    @Override
+    void setAddress(BigInteger address) throws RuntimeLangException {
+        throw new RuntimeLangException(RuntimeLangException.Type.ILLEGAL_MODIFICATION);
     }
 }

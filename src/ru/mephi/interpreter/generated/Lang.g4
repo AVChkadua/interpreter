@@ -4,7 +4,7 @@ package ru.mephi.interpreter.generated;
 }
 main: sentence*;
 sentence: assign SEMI #Assigning
-    | forEach #ForEachCycle
+    | forEach SEMI #ForEachCycle
     | declarePointer SEMI #PointerDeclaration
     | declareVariable SEMI #VariableDeclaration
     | declareArray SEMI #ArrayDeclaration
@@ -18,7 +18,7 @@ sentence: assign SEMI #Assigning
     | TOP SEMI #MoveTop
     | BOTTOM SEMI #MoveBottom
     | BREAK SEMI #Breaking
-    | returnExpr #Returning
+    | returnExpr SEMI #Returning
     | body #BodyPart
     ;
 expr: '(' expr ')' #BracedExpr
@@ -36,32 +36,32 @@ assign: declareVariable '=' expr #JustDeclaredVariable
     ;
 value: INT #ConstValue
     | arrayElement #ArrayElementValue
+    | NAME #NamedVariableValue
     | pointerValue #PointerValueValue
-    | pointerAddress #PointerAddressValue
+    | variableAddress #VariableAddressValue
     ;
 variableWithLength: NAME;
 variable: NAME #NamedVariable
     | arrayElement #ArrayElementVariable
     | pointerValue #PointerValueVariable
-    | pointerAddress #PointerAddressVariable
+    | variableAddress #PointerAddressVariable
     ;
 argument: INT
     | arrayElement
     | pointerValue
-    | pointerAddress;
+    | variableAddress;
 declareVariable: CONST? VALUE TYPE NAME;
 declarePointer: CONST? POINTER CONST? TYPE NAME;
 declareArray: CONST? ARRAY_OF TYPE NAME;
 pointerValue: '*' NAME;
-pointerAddress: '&' NAME
-    | NAME;
+variableAddress: '&' NAME;
 arrayElement: NAME index;
 index: '[' expr ']';
 whileDeclaration: WHILE '(' expr ')';
 finishDeclaration: FINISH;
 zeroDeclaration: ZERO '(' expr ')';
 notZeroDeclaration: NOT_ZERO '(' expr ')';
-forEach: FOR_EACH NAME func=funcCall SEMI;
+forEach: FOR_EACH NAME func=funcCall;
 funcCall: NAME '(' (argument(', 'argument)*)? ')';
 functionDeclaration: TYPE funcName=NAME '(' (parameter(', ' parameter)*)? ')';
 body: '{' sentence* '}';
@@ -70,7 +70,7 @@ zero: zeroCond=zeroDeclaration body;
 notZero: notZeroCond=notZeroDeclaration body;
 funcImpl: functionDeclaration body;
 parameter: TYPE NAME;
-returnExpr: RETURN expr SEMI;
+returnExpr: RETURN expr;
 SPACE: (' ')+ {skip();};
 TYPE: 'int'
     | 'byte'
