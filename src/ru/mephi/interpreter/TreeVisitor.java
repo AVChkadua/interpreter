@@ -166,7 +166,6 @@ public class TreeVisitor
             System.out.println(e.getType());
             continueParsing = false;
         }
-        System.out.println(currentScope);
         return null;
     }
 
@@ -360,7 +359,6 @@ public class TreeVisitor
 
     @Override
     public String visitFunctionCall(LangParser.FunctionCallContext ctx) {
-        // TODO result returning
         String name = ctx.getChild(0).getChild(0).getText();
         List<Variable> args = new ArrayList<>();
         List<Class> types = new ArrayList<>();
@@ -400,7 +398,6 @@ public class TreeVisitor
 
     @Override
     public String visitCall(LangParser.CallContext ctx) {
-        // TODO result returning
         String name = ctx.getChild(0).getChild(0).getText();
         List<Variable> args = new ArrayList<>();
         List<Class> types = new ArrayList<>();
@@ -436,7 +433,6 @@ public class TreeVisitor
             System.out.println(e.getType());
             continueParsing = false;
         }
-        System.out.println(result);
         currentScope = currentScope.getParent();
         return result;
     }
@@ -466,8 +462,11 @@ public class TreeVisitor
         for (int i = 0; i < ctx.getChildCount(); i++) {
             if (ctx.getChild(i).getText().toLowerCase().equals("break")) {
                 return null;
+            } else if (ctx.getChild(i).getText().toLowerCase().startsWith("return")) {
+                result = visit(ctx.getChild(i));
+            } else {
+                visit(ctx.getChild(i));
             }
-            result = visit(ctx.getChild(i));
         }
         return result;
     }
@@ -512,6 +511,12 @@ public class TreeVisitor
     @Override
     public String visitReturning(LangParser.ReturningContext ctx) {
         return visit(ctx.getChild(0).getChild(1));
+    }
+
+    @Override
+    public String visitPrint(LangParser.PrintContext ctx) {
+        System.out.println(visit(ctx.getChild(1)));
+        return null;
     }
 
     private Variable getVariable(String name) throws RuntimeLangException {

@@ -20,6 +20,7 @@ sentence: assign SEMI #Assigning
     | BREAK SEMI #Breaking
     | returnExpr SEMI #Returning
     | body #BodyPart
+    | print SEMI #Write
     ;
 expr: '(' expr ')' #BracedExpr
     | '$' variableWithLength #Length
@@ -71,6 +72,7 @@ notZero: notZeroCond=notZeroDeclaration body;
 funcImpl: functionDeclaration body;
 parameter: TYPE NAME;
 returnExpr: RETURN expr;
+print: PRINT expr;
 SPACE: (' ')+ {skip();};
 TYPE: 'int'
     | 'byte'
@@ -94,6 +96,7 @@ FOR_EACH: 'foreach';
 RETURN: 'return';
 BREAK: 'break';
 SEMI: ';';
+PRINT: 'print';
 INT: [-]?[0-9]+;
 NEWLINE: [\r\n]+ {skip();};
 NAME: [a-z][a-zA-Z0-9]*;
