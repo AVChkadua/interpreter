@@ -1,5 +1,6 @@
 package ru.mephi.interpreter;
 
+import org.antlr.v4.runtime.tree.ErrorNode;
 import org.antlr.v4.runtime.tree.ParseTree;
 import ru.mephi.interpreter.generated.LangBaseVisitor;
 import ru.mephi.interpreter.generated.LangParser;
@@ -47,7 +48,7 @@ public class TreeVisitor
             if (ctx.op.getText().equals("+")) {
                 return toS(toI(visit(ctx.getChild(0))).add(toI(visit(ctx.getChild(2)))));
             } else if (ctx.op.getText().equals("-")) {
-                return toS(toI(visit(ctx.getChild(0))).add(toI(visit(ctx.getChild(2)))));
+                return toS(toI(visit(ctx.getChild(0))).subtract(toI(visit(ctx.getChild(2)))));
             }
         } catch (RuntimeLangException e) {
             System.out.println(e.getType());
@@ -60,11 +61,11 @@ public class TreeVisitor
     public String visitMultiOp(LangParser.MultiOpContext ctx) {
         try {
             if (ctx.op.getText().equals("*")) {
-                return toS(toI(visit(ctx.getChild(0))).multiply(toI(visit(ctx.getChild(1)))));
+                return toS(toI(visit(ctx.getChild(0))).multiply(toI(visit(ctx.getChild(2)))));
             } else if (ctx.op.getText().equals("/")) {
-                return toS(toI(visit(ctx.getChild(0))).divide(toI(visit(ctx.getChild(1)))));
+                return toS(toI(visit(ctx.getChild(0))).divide(toI(visit(ctx.getChild(2)))));
             } else if (ctx.op.getText().equals("%")) {
-                return toS(toI(visit(ctx.getChild(0))).remainder(toI(visit(ctx.getChild(1)))));
+                return toS(toI(visit(ctx.getChild(0))).remainder(toI(visit(ctx.getChild(2)))));
             }
         } catch (RuntimeLangException e) {
             System.out.println();
@@ -88,16 +89,16 @@ public class TreeVisitor
         try {
             if (ctx.op.getText().equals("==")) {
                 return toS(toI(visit(ctx.getChild(0))).compareTo(toI(visit(ctx.getChild(2)))) == 0 ? BigInteger.ONE :
-                           BigInteger.ZERO);
+                        BigInteger.ZERO);
             } else if (ctx.op.getText().equals("!=")) {
                 return toS(toI(visit(ctx.getChild(0))).compareTo(toI(visit(ctx.getChild(2)))) != 0 ? BigInteger.ONE :
-                           BigInteger.ZERO);
+                        BigInteger.ZERO);
             } else if (ctx.op.getText().equals("<=")) {
                 return toS(toI(visit(ctx.getChild(0))).compareTo(toI(visit(ctx.getChild(2)))) <= 0 ? BigInteger.ONE :
-                           BigInteger.ZERO);
+                        BigInteger.ZERO);
             } else if (ctx.op.getText().equals(">=")) {
                 return toS(toI(visit(ctx.getChild(0))).compareTo(toI(visit(ctx.getChild(2)))) >= 0 ? BigInteger.ONE :
-                           BigInteger.ZERO);
+                        BigInteger.ZERO);
             }
         } catch (RuntimeLangException e) {
             System.out.println(e.getType());
@@ -124,7 +125,7 @@ public class TreeVisitor
                 variable.setValue(toI(visit(ctx.getChild(2))));
             } else if (variable instanceof Pointer) {
                 if (ctx.getChild(0).getChild(0).getText().contains("*")) {
-                    currentScope.setValueByAddress((Pointer)variable, toI(visit(ctx.getChild(2))));
+                    currentScope.setValueByAddress((Pointer) variable, toI(visit(ctx.getChild(2))));
                 } else if (ctx.getChild(0).getChild(0).getText().contains("&")) {
                     variable.setAddress(toI(visit(ctx.getChild(2))));
                 }
@@ -212,8 +213,14 @@ public class TreeVisitor
     @Override
     public String visitArrayElementValue(LangParser.ArrayElementValueContext ctx) {
         try {
-            return toS(getVariable(ctx.getChild(0).getChild(0).getText())
-                    .getElement(toI(visit(ctx.getChild(0).getChild(1))).intValue()).getValue());
+            Variable variable = getVariable(ctx.getChild(0).getChild(0).getText())
+                    .getElement(toI(visit(ctx.getChild(0).getChild(1))).intValue());
+            if (variable.getValue() != null) {
+                return toS(variable.getValue());
+            } else {
+                System.out.println(RuntimeLangException.Type.INVALID_LENGTH);
+                continueParsing = false;
+            }
         } catch (RuntimeLangException e) {
             System.out.println(e.getType());
             continueParsing = false;
@@ -226,7 +233,8 @@ public class TreeVisitor
         try {
             return toS(getVariable(ctx.getChild(0).getText()).getValue());
         } catch (RuntimeLangException e) {
-            e.printStackTrace();
+            System.out.println(e.getType());
+            continueParsing = false;
         }
         return "0";
     }
@@ -238,7 +246,7 @@ public class TreeVisitor
             if (!(variable instanceof Pointer)) {
                 System.out.println(RuntimeLangException.Type.NO_SUCH_VARIABLE);
             } else {
-                return toS(currentScope.getByAddress((Pointer)variable).getValue());
+                return toS(currentScope.getByAddress((Pointer) variable).getValue());
             }
         } catch (RuntimeLangException e) {
             System.out.println(e.getType());
@@ -322,20 +330,37 @@ public class TreeVisitor
         List<Variable> args = new ArrayList<>();
         List<Class> types = new ArrayList<>();
         try {
-            BigInteger length = BigInteger.ONE;
+            BigInteger length;
             if (variable instanceof Array) {
-                types.add(variable.getElement(0).getType());
+                types.add(variable.getElement(0).type);
                 length = variable.getLength();
             } else if (variable != null) {
                 types.add(variable.type);
                 length = variable.getLength();
+            } else {
+                throw new RuntimeLangException(RuntimeLangException.Type.NO_SUCH_VARIABLE);
             }
-            for (int i = 0; i < length.intValue() - 1; i++) {
+            for (int j = 2; j < ctx.getChild(0).getChild(2).getChildCount(); j += 2) {
+                if (!ctx.getChild(0).getChild(2).getChild(j).getText().equals(")")) {
+                    types.add(getVariable(ctx.getChild(0).getChild(2).getChild(j).getText()).type);
+                }
+            }
+
+            ParseTree functionTree = getFunction(ctx.getChild(0).getChild(2).getChild(0).getText(), types);
+            Function func = currentScope.getFunction(ctx.getChild(0).getChild(2).getChild(0).getText(), types);
+
+            for (int i = 0; i < length.intValue(); i++) {
                 currentScope = new Scope(currentScope);
-                ParseTree functionTree = getFunction(ctx.getChild(0).getChild(2).getText(), types);
-                Function func = currentScope.getFunction(ctx.getChild(0).getChild(2).getText(), types);
+                args.clear();
+                if (variable instanceof Array) {
+                    args.add(variable.getElement(i));
+                } else {
+                    args.add(variable);
+                }
                 for (int j = 2; j < ctx.getChild(0).getChild(2).getChildCount(); j += 2) {
-                    args.add(getVariable(ctx.getChild(0).getChild(2).getChild(j).getText()));
+                    if (!ctx.getChild(0).getChild(2).getChild(j).getText().equals(")")) {
+                        args.add(getVariable(ctx.getChild(0).getChild(2).getChild(j).getText()));
+                    }
                 }
                 for (int j = 0; j < args.size(); j++) {
                     if (args.get(j) instanceof SimpleVariable) {
@@ -366,18 +391,16 @@ public class TreeVisitor
         ParseTree functionTree;
         Function func;
         try {
+            for (int i = 2; i < ctx.getChild(0).getChildCount(); i += 2) {
+                if (!ctx.getChild(0).getChild(i).getText().equals(")")) {
+                    Variable variable = getVariable(ctx.getChild(0).getChild(i).getText());
+                    args.add(variable);
+                    types.add(variable.getType());
+                }
+            }
             functionTree = getFunction(name, types);
             func = currentScope.getFunction(name, types);
-        } catch (RuntimeLangException e) {
-            System.out.println(e.getType());
-            continueParsing = false;
-            return result;
-        }
-        currentScope = new Scope(currentScope);
-        try {
-            for (int i = 2; i < ctx.getChild(0).getChildCount(); i += 2) {
-                args.add(getVariable(ctx.getChild(0).getChild(i).getText()));
-            }
+            currentScope = new Scope(currentScope);
             for (int i = 0; i < args.size(); i++) {
                 if (args.get(i) instanceof SimpleVariable) {
                     currentScope.add(new SimpleVariable(func.args.get(i).name, func.args.get(i).type,
@@ -405,20 +428,16 @@ public class TreeVisitor
         ParseTree functionTree;
         Function func;
         try {
-            functionTree = getFunction(name, types);
-            func = currentScope.getFunction(name, types);
-        } catch (RuntimeLangException e) {
-            System.out.println(e.getType());
-            continueParsing = false;
-            return result;
-        }
-        currentScope = new Scope(currentScope);
-        try {
             for (int i = 2; i < ctx.getChild(0).getChildCount(); i += 2) {
                 if (!ctx.getChild(0).getChild(i).getText().equals(")")) {
-                    args.add(getVariable(ctx.getChild(0).getChild(i).getText()));
+                    Variable variable = getVariable(ctx.getChild(0).getChild(i).getText());
+                    args.add(variable);
+                    types.add(variable.getType());
                 }
             }
+            functionTree = getFunction(name, types);
+            func = currentScope.getFunction(name, types);
+            currentScope = new Scope(currentScope);
             for (int i = 0; i < args.size(); i++) {
                 if (args.get(i) instanceof SimpleVariable) {
                     currentScope.add(new SimpleVariable(func.args.get(i).name, func.args.get(i).type,
@@ -440,9 +459,9 @@ public class TreeVisitor
     @Override
     public String visitFunctionImplementation(LangParser.FunctionImplementationContext ctx) {
         List<Argument> args = new ArrayList<>();
-        for (int i = 2; i < ctx.getChild(0).getChildCount() - 1; i += 2) {
-            args.add(new Argument(ctx.getChild(0).getChild(i).getChild(1).getText(),
-                    getVariableClass(ctx.getChild(0).getChild(i).getChild(0).getText())));
+        for (int i = 3; i < ctx.getChild(0).getChild(0).getChildCount() - 1; i += 2) {
+            args.add(new Argument(ctx.getChild(0).getChild(0).getChild(i).getChild(1).getText(),
+                    getVariableClass(ctx.getChild(0).getChild(0).getChild(i).getChild(0).getText())));
         }
         try {
             currentScope.addFunction(
@@ -460,8 +479,8 @@ public class TreeVisitor
     public String visitBody(LangParser.BodyContext ctx) {
         String result = null;
         for (int i = 0; i < ctx.getChildCount(); i++) {
-            if (ctx.getChild(i).getText().toLowerCase().equals("break")) {
-                return null;
+            if (ctx.getChild(i).getChild(0) != null && ctx.getChild(i).getChild(0).getText().toLowerCase().equals("break")) {
+                return "break";
             } else if (ctx.getChild(i).getText().toLowerCase().startsWith("return")) {
                 result = visit(ctx.getChild(i));
             } else {
@@ -475,7 +494,11 @@ public class TreeVisitor
     public String visitWhileCycle(LangParser.WhileCycleContext ctx) {
         currentScope = new Scope(currentScope);
         while (visit(ctx.getChild(0).getChild(0).getChild(2)).equals("1")) {
-            visit(ctx.getChild(0).getChild(1));
+            String visitResult = visit(ctx.getChild(0).getChild(1));
+            if (visitResult != null && visitResult.equals("break")) {
+                currentScope = currentScope.getParent();
+                return null;
+            }
         }
         currentScope = currentScope.getParent();
         visit(ctx.getChild(0).getChild(3));
@@ -495,7 +518,7 @@ public class TreeVisitor
     @Override
     public String visitIfNotZero(LangParser.IfNotZeroContext ctx) {
         currentScope = new Scope(currentScope);
-        if (visit(ctx.getChild(0).getChild(0).getChild(2)).equals("0")) {
+        if (!visit(ctx.getChild(0).getChild(0).getChild(2)).equals("0")) {
             visit(ctx.getChild(0).getChild(1));
         }
         currentScope = currentScope.getParent();
@@ -504,8 +527,7 @@ public class TreeVisitor
 
     @Override
     public String visitBreaking(LangParser.BreakingContext ctx) {
-        currentScope = currentScope.getParent();
-        return null;
+        return "break";
     }
 
     @Override
@@ -516,6 +538,22 @@ public class TreeVisitor
     @Override
     public String visitPrint(LangParser.PrintContext ctx) {
         System.out.println(visit(ctx.getChild(1)));
+        return null;
+    }
+
+    @Override
+    public String visitErrorNode(ErrorNode node) {
+        System.out.println(node.getSymbol().getLine());
+        return null;
+    }
+
+    @Override
+    public String visitBodyPart(LangParser.BodyPartContext ctx) {
+        currentScope = new Scope(currentScope);
+        for (int i = 1; i < ctx.getChild(0).getChildCount() - 1; i++) {
+            visit(ctx.getChild(0).getChild(i));
+        }
+        currentScope = currentScope.getParent();
         return null;
     }
 
@@ -539,10 +577,6 @@ public class TreeVisitor
 
     private ParseTree getFunction(String name, List<Class> types) throws RuntimeLangException {
         return currentScope.getFunctionTree(name, types);
-    }
-
-    private void saveFunction(Function function, ParseTree tree) throws RuntimeLangException {
-        currentScope.addFunction(function, tree);
     }
 
     private BigInteger toI(String s) throws RuntimeLangException {

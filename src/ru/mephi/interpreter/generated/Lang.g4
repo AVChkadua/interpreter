@@ -48,9 +48,7 @@ variable: NAME #NamedVariable
     | variableAddress #PointerAddressVariable
     ;
 argument: INT
-    | arrayElement
-    | pointerValue
-    | variableAddress;
+    | variable;
 declareVariable: CONST? VALUE TYPE NAME;
 declarePointer: CONST? POINTER CONST? TYPE NAME;
 declareArray: CONST? ARRAY_OF TYPE NAME;

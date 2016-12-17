@@ -6,10 +6,10 @@ import java.util.ArrayList;
 /**
  * @author Anton_Chkadua
  */
-public class Array
+class Array
         extends Variable {
 
-    ArrayList<Variable> content;
+    private ArrayList<Variable> content;
     private int quant = 4;
 
     Array(String name, Class type, Integer size, boolean isConstant) throws RuntimeLangException {
@@ -51,27 +51,6 @@ public class Array
             throw new RuntimeLangException(RuntimeLangException.Type.INVALID_LENGTH);
         }
         return result;
-    }
-
-    @Override
-    void setElement(int i, Variable value) throws RuntimeLangException {
-        if (!value.getClass().equals(type)) {
-            throw new RuntimeLangException(RuntimeLangException.Type.ILLEGAL_MODIFICATION);
-        } else if (i < content.size()) {
-            content.remove(i);
-            content.add(i, value);
-        } else if (i == content.size() + 1) {
-            ArrayList<Variable> buf = content;
-            content = new ArrayList<>(buf.size() + 4);
-            content.addAll(buf);
-            content.add(value);
-        } else {
-            throw new RuntimeLangException(RuntimeLangException.Type.ILLEGAL_MODIFICATION);
-        }
-    }
-
-    void addElement(Variable value) throws RuntimeLangException {
-        setElement(content.size(), value);
     }
 
     @Override

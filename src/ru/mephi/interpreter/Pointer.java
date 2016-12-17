@@ -49,9 +49,4 @@ public class Pointer
     Variable getElement(int i) throws RuntimeLangException {
         throw new RuntimeLangException(RuntimeLangException.Type.INVALID_LENGTH);
     }
-
-    @Override
-    void setElement(int i, Variable value) throws RuntimeLangException {
-        throw new RuntimeLangException(RuntimeLangException.Type.ILLEGAL_MODIFICATION);
-    }
 }

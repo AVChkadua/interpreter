@@ -24,11 +24,6 @@ public class SimpleVariable
     }
 
     @Override
-    void setElement(int i, Variable value) throws RuntimeLangException {
-        throw new RuntimeLangException(RuntimeLangException.Type.ILLEGAL_MODIFICATION);
-    }
-
-    @Override
     public BigInteger getValue() {
         return value;
     }

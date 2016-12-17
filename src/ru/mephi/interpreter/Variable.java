@@ -5,12 +5,12 @@ import java.math.BigInteger;
 /**
  * @author Anton_Chkadua
  */
-public abstract class Variable
+abstract class Variable
         extends Argument {
 
     final boolean constantValue;
 
-    protected Variable(String name, Class type, boolean constantValue) {
+    Variable(String name, Class type, boolean constantValue) {
         super(name, type);
         this.constantValue = constantValue;
     }
@@ -26,6 +26,4 @@ public abstract class Variable
     abstract void setAddress(BigInteger address) throws RuntimeLangException;
 
     abstract Variable getElement(int i) throws RuntimeLangException;
-
-    abstract void setElement(int i, Variable value) throws RuntimeLangException;
 }

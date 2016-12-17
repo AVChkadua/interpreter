@@ -37,8 +37,7 @@ public class Scope {
     Variable get(String name) throws RuntimeLangException {
         Variable candidate =
                 variables.values().stream().filter(variable -> variable.getName().equals(name)).findAny()
-                         .orElseThrow(() -> new RuntimeLangException(
-                                 RuntimeLangException.Type.NO_SUCH_VARIABLE));
+                        .orElse(null);
         if (candidate == null) {
             if (parent != null) {
                 candidate = parent.get(name);
@@ -76,14 +75,32 @@ public class Scope {
     }
 
     ParseTree getFunctionTree(String name, List<Class> types) throws RuntimeLangException {
-        return functions.get(getFunction(name, types));
+        ParseTree tree = functions.get(getFunction(name, types));
+        if (tree == null) {
+            if (parent != null) {
+                tree = parent.getFunctionTree(name, types);
+            } else {
+                throw new RuntimeLangException(RuntimeLangException.Type.NO_SUCH_FUNCTION);
+            }
+        }
+        return tree;
     }
 
     Function getFunction(String name, List<Class> types) throws RuntimeLangException {
-        Function candidate =
+        Map.Entry<Function, ParseTree> entryCandidate =
                 functions.entrySet().stream().filter(entry -> entry.getKey().name.equals(name)).findAny()
-                         .orElseThrow(() -> new RuntimeLangException(RuntimeLangException.Type.NO_SUCH_FUNCTION))
-                         .getKey();
+                        .orElse(null);
+        Function candidate = null;
+        if (entryCandidate == null) {
+            if (parent != null) {
+                candidate = parent.getFunction(name, types);
+            }
+        } else {
+            candidate = entryCandidate.getKey();
+        }
+        if (candidate == null) {
+            throw new RuntimeLangException(RuntimeLangException.Type.NO_SUCH_FUNCTION);
+        }
         if (candidate.args.size() != types.size()) {
             throw new RuntimeLangException(RuntimeLangException.Type.NO_SUCH_FUNCTION);
         }
@@ -102,10 +119,10 @@ public class Scope {
 
         for (Variable variable : variables.values()) {
             builder.append(variable.getName()).append("-").append(variable.getType()).append("-length-")
-                   .append(variable.getLength());
+                    .append(variable.getLength());
             try {
                 builder.append("-value-").append(variable.getValue()).append('-').append(variable.constantValue)
-                       .append("\r\n");
+                        .append("\r\n");
             } catch (RuntimeLangException e) {
                 System.out.println(e.getType());
             }
