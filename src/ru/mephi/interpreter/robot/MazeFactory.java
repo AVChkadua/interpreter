@@ -40,8 +40,8 @@ public class MazeFactory {
                 Pattern pattern = Pattern.compile(exitRegex);
                 Matcher matcher = pattern.matcher(line);
                 if (matcher.matches()) {
-                    Integer x = Integer.valueOf(matcher.group(2));
-                    Integer y = Integer.valueOf(matcher.group(3));
+                    Integer x = Integer.valueOf(matcher.group(1));
+                    Integer y = Integer.valueOf(matcher.group(2));
                     maze.addExit(new MazeCell(x, y));
                 }
             } else if (line.matches(wallRegex)) {

@@ -1,6 +1,5 @@
 package ru.mephi.interpreter;
 
-import org.antlr.v4.runtime.tree.ErrorNode;
 import org.antlr.v4.runtime.tree.ParseTree;
 import ru.mephi.interpreter.generated.LangBaseVisitor;
 import ru.mephi.interpreter.generated.LangParser;
@@ -20,37 +19,126 @@ public class TreeVisitor
     private Robot robot = Robot.getInstance();
 
     @Override
-    public String visitMoveLeft(LangParser.MoveLeftContext ctx) {
-        // TODO
+    public String visitMain(LangParser.MainContext ctx) {
+        visitChildren(ctx);
+        try {
+            visit(getFunction("main", new ArrayList<>()));
+        } catch (RuntimeLangException e) {
+            System.out.println(e.getType());
+        }
         return null;
+    }
+
+    @Override
+    public String visitMoveLeft(LangParser.MoveLeftContext ctx) {
+        return String.valueOf(robot.left());
     }
 
     @Override
     public String visitMoveRight(LangParser.MoveRightContext ctx) {
-        // TODO
-        return null;
+        return String.valueOf(robot.right());
     }
 
     @Override
     public String visitMoveTop(LangParser.MoveTopContext ctx) {
-        // TODO
-        return null;
+        return String.valueOf(robot.top());
     }
 
     @Override
     public String visitMoveBottom(LangParser.MoveBottomContext ctx) {
-        // TODO
-        return null;
+        return String.valueOf(robot.bottom());
     }
 
     @Override
     public String visitCreatePortal(LangParser.CreatePortalContext ctx) {
-        return super.visitCreatePortal(ctx);
+        robot.createTeleport();
+        return null;
     }
 
     @Override
     public String visitTeleport(LangParser.TeleportContext ctx) {
-        return super.visitTeleport(ctx);
+        robot.teleport();
+        return null;
+    }
+
+    @Override
+    public String visitCanMoveBottom(LangParser.CanMoveBottomContext ctx) {
+        if (robot.canMoveBottom()) {
+            return "1";
+        }
+        return "0";
+    }
+
+    @Override
+    public String visitCanMoveLeft(LangParser.CanMoveLeftContext ctx) {
+        if (robot.canMoveLeft()) {
+            return "1";
+        }
+        return "0";
+    }
+
+    @Override
+    public String visitCanMoveRight(LangParser.CanMoveRightContext ctx) {
+        if (robot.canMoveRight()) {
+            return "1";
+        }
+        return "0";
+    }
+
+    @Override
+    public String visitCanMoveTop(LangParser.CanMoveTopContext ctx) {
+        if (robot.canMoveTop()) {
+            return "1";
+        }
+        return "0";
+    }
+
+    @Override
+    public String visitVisitedBottom(LangParser.VisitedBottomContext ctx) {
+        if (robot.visitedBottom()) {
+            return "1";
+        }
+        return "0";
+    }
+
+    @Override
+    public String visitVisitedLeft(LangParser.VisitedLeftContext ctx) {
+        if (robot.visitedLeft()) {
+            return "1";
+        }
+        return "0";
+    }
+
+    @Override
+    public String visitVisitedRight(LangParser.VisitedRightContext ctx) {
+        if (robot.visitedRight()) {
+            return "1";
+        }
+        return "0";
+    }
+
+    @Override
+    public String visitVisitedTop(LangParser.VisitedTopContext ctx) {
+        if (robot.visitedTop()) {
+            return "1";
+        }
+        return "0";
+    }
+
+    @Override
+    public String visitIsAtExit(LangParser.IsAtExitContext ctx) {
+        if (robot.checkIfAtExit()) {
+            return "1";
+        }
+        return "0";
+    }
+
+    @Override
+    public String visitNotAtExit(LangParser.NotAtExitContext ctx) {
+        if (robot.checkIfAtExit()) {
+            return "0";
+        }
+        return "1";
     }
 
     @Override
@@ -78,7 +166,7 @@ public class TreeVisitor
                 return toS(toI(visit(ctx.getChild(0))).remainder(toI(visit(ctx.getChild(2)))));
             }
         } catch (RuntimeLangException e) {
-            System.out.println();
+            System.out.println(e.getType());
         }
         return null;
     }
@@ -449,17 +537,17 @@ public class TreeVisitor
     }
 
     @Override
-    public String visitFunctionImplementation(LangParser.FunctionImplementationContext ctx) {
+    public String visitFuncImpl(LangParser.FuncImplContext ctx) {
         List<Argument> args = new ArrayList<>();
-        for (int i = 3; i < ctx.getChild(0).getChild(0).getChildCount() - 1; i += 2) {
-            args.add(new Argument(ctx.getChild(0).getChild(0).getChild(i).getChild(1).getText(),
-                    getVariableClass(ctx.getChild(0).getChild(0).getChild(i).getChild(0).getText())));
+        for (int i = 3; i < ctx.getChild(0).getChildCount() - 1; i += 2) {
+            args.add(new Argument(ctx.getChild(0).getChild(i).getChild(1).getText(),
+                    getVariableClass(ctx.getChild(0).getChild(i).getChild(0).getText())));
         }
         try {
             currentScope.addFunction(
-                    new Function(ctx.getChild(0).getChild(0).getChild(1).getText(),
-                            getVariableClass(ctx.getChild(0).getChild(0).getChild(0).getText()), args),
-                    ctx.getChild(0).getChild(1));
+                    new Function(ctx.getChild(0).getChild(1).getText(),
+                            getVariableClass(ctx.getChild(0).getChild(0).getText()), args),
+                    ctx.getChild(1));
         } catch (RuntimeLangException e) {
             System.out.println(e.getType());
         }
@@ -470,7 +558,8 @@ public class TreeVisitor
     public String visitBody(LangParser.BodyContext ctx) {
         String result = null;
         for (int i = 0; i < ctx.getChildCount(); i++) {
-            if (ctx.getChild(i).getChild(0) != null && ctx.getChild(i).getChild(0).getText().toLowerCase().equals("break")) {
+            if (ctx.getChild(i).getChild(0) != null && ctx.getChild(i).getChild(0).getText().toLowerCase().equals(
+                    "break")) {
                 return "break";
             } else if (ctx.getChild(i).getText().toLowerCase().startsWith("return")) {
                 result = visit(ctx.getChild(i));
@@ -483,15 +572,15 @@ public class TreeVisitor
 
     @Override
     public String visitWhileCycle(LangParser.WhileCycleContext ctx) {
-        currentScope = new Scope(currentScope);
         while (visit(ctx.getChild(0).getChild(0).getChild(2)).equals("1")) {
+            currentScope = new Scope(currentScope);
             String visitResult = visit(ctx.getChild(0).getChild(1));
             if (visitResult != null && visitResult.equals("break")) {
                 currentScope = currentScope.getParent();
                 return null;
             }
+            currentScope = currentScope.getParent();
         }
-        currentScope = currentScope.getParent();
         visit(ctx.getChild(0).getChild(3));
         return null;
     }
@@ -529,12 +618,6 @@ public class TreeVisitor
     @Override
     public String visitPrint(LangParser.PrintContext ctx) {
         System.out.println(visit(ctx.getChild(1)));
-        return null;
-    }
-
-    @Override
-    public String visitErrorNode(ErrorNode node) {
-        System.out.println(node.getSymbol().getLine());
         return null;
     }
 

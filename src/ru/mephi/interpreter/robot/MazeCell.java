@@ -7,7 +7,7 @@ public class MazeCell {
     private int x;
     private int y;
 
-    MazeCell(int x, int y){
+    MazeCell(int x, int y) {
         this.x = x;
         this.y = y;
     }

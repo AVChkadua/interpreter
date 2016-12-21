@@ -2,7 +2,7 @@ grammar Lang;
 @header {
 package ru.mephi.interpreter.generated;
 }
-main: sentence*;
+main: funcImpl+;
 sentence: assign SEMI #Assigning
     | forEach SEMI #ForEachCycle
     | declarePointer SEMI #PointerDeclaration
@@ -17,7 +17,7 @@ sentence: assign SEMI #Assigning
     | RIGHT SEMI #MoveRight
     | TOP SEMI #MoveTop
     | BOTTOM SEMI #MoveBottom
-    | PORTAL #CreatePortal
+    | PORTAL SEMI #CreatePortal
     | TELEPORT SEMI #Teleport
     | BREAK SEMI #Breaking
     | returnExpr SEMI #Returning
@@ -31,6 +31,16 @@ expr: '(' expr ')' #BracedExpr
     | value #Const
     | expr op=('!='|'<='|'>='|'==') expr #Comparing
     | funcCall #Call
+    | CAN_GO_LEFT #CanMoveLeft
+    | CAN_GO_RIGHT #CanMoveRight
+    | CAN_GO_TOP #CanMoveTop
+    | CAN_GO_BOTTOM #CanMoveBottom
+    | VISITED_LEFT #VisitedLeft
+    | VISITED_RIGHT #VisitedRight
+    | VISITED_TOP #VisitedTop
+    | VISITED_BOTTOM #VisitedBottom
+    | IS_AT_EXIT #IsAtExit
+    | NOT_AT_EXIT #NotAtExit
     ;
 assign: declareVariable '=' expr #JustDeclaredVariable
     | declarePointer '=' expr #JustDeclaredPointer
@@ -81,14 +91,14 @@ TOP: 'top';
 BOTTOM: 'bottom';
 LEFT: 'left';
 RIGHT: 'right';
-CAN_GO_TOP: 'can go top';
-CAN_GO_BOTTOM: 'can go bottom';
-CAN_GO_LEFT: 'can go left';
-CAN_GO_RIGHT: 'can go right';
-VISITED_LEFT: 'visited left';
-VISITED_RIGHT: 'visited right';
-VISITED_TOP: 'visited top';
-VISITED_BOTTOM: 'visited bottom';
+CAN_GO_TOP: 'can_go_top';
+CAN_GO_BOTTOM: 'can_go_bottom';
+CAN_GO_LEFT: 'can_go_left';
+CAN_GO_RIGHT: 'can_go_right';
+VISITED_LEFT: 'visited_left';
+VISITED_RIGHT: 'visited_right';
+VISITED_TOP: 'visited_top';
+VISITED_BOTTOM: 'visited_bottom';
 PORTAL: 'portal';
 TELEPORT: 'teleport';
 CONST: 'const';
@@ -105,6 +115,8 @@ RETURN: 'return';
 BREAK: 'break';
 SEMI: ';';
 PRINT: 'print';
+IS_AT_EXIT: 'exit?';
+NOT_AT_EXIT: 'not_exit?';
 INT: [-]?[0-9]+;
 NEWLINE: [\r\n]+ {skip();};
 NAME: [a-z][a-zA-Z0-9]*;

@@ -99,7 +99,11 @@ public class Scope {
             candidate = entryCandidate.getKey();
         }
         if (candidate == null) {
-            throw new RuntimeLangException(RuntimeLangException.Type.NO_SUCH_FUNCTION);
+            if (name.equals("main")) {
+                throw new RuntimeLangException(RuntimeLangException.Type.NO_MAIN_FUNCTION);
+            } else {
+                throw new RuntimeLangException(RuntimeLangException.Type.NO_SUCH_FUNCTION);
+            }
         }
         if (candidate.args.size() != types.size()) {
             throw new RuntimeLangException(RuntimeLangException.Type.NO_SUCH_FUNCTION);
