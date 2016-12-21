@@ -43,6 +43,9 @@ class Array
     Variable getElement(int i) throws RuntimeLangException {
         if (i > content.size()) throw new RuntimeLangException(RuntimeLangException.Type.INVALID_LENGTH);
         if (i == content.size()) {
+            ArrayList<Variable> oldContent = content;
+            content = new ArrayList<>(oldContent.size() + quant);
+            content.addAll(oldContent);
             Variable newElement = new SimpleVariable("element", type, null, false);
             content.add(newElement);
         }

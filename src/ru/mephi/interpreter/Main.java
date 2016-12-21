@@ -6,6 +6,7 @@ import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.tree.ParseTree;
 import ru.mephi.interpreter.generated.LangLexer;
 import ru.mephi.interpreter.generated.LangParser;
+import ru.mephi.interpreter.robot.MazeFactory;
 
 import java.io.IOException;
 
@@ -18,6 +19,7 @@ public class Main {
         LangParser parser = new LangParser(tokens);
         ParseTree tree = parser.main();
 
+        MazeFactory.importFile("/home/anton/test/maze");
         new TreeVisitor().visit(tree);
     }
 }

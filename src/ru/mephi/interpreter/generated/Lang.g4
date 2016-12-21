@@ -17,6 +17,8 @@ sentence: assign SEMI #Assigning
     | RIGHT SEMI #MoveRight
     | TOP SEMI #MoveTop
     | BOTTOM SEMI #MoveBottom
+    | PORTAL #CreatePortal
+    | TELEPORT SEMI #Teleport
     | BREAK SEMI #Breaking
     | returnExpr SEMI #Returning
     | body #BodyPart
@@ -79,6 +81,14 @@ TOP: 'top';
 BOTTOM: 'bottom';
 LEFT: 'left';
 RIGHT: 'right';
+CAN_GO_TOP: 'can go top';
+CAN_GO_BOTTOM: 'can go bottom';
+CAN_GO_LEFT: 'can go left';
+CAN_GO_RIGHT: 'can go right';
+VISITED_LEFT: 'visited left';
+VISITED_RIGHT: 'visited right';
+VISITED_TOP: 'visited top';
+VISITED_BOTTOM: 'visited bottom';
 PORTAL: 'portal';
 TELEPORT: 'teleport';
 CONST: 'const';

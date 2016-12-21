@@ -4,6 +4,7 @@ import org.antlr.v4.runtime.tree.ErrorNode;
 import org.antlr.v4.runtime.tree.ParseTree;
 import ru.mephi.interpreter.generated.LangBaseVisitor;
 import ru.mephi.interpreter.generated.LangParser;
+import ru.mephi.interpreter.robot.Robot;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
@@ -16,7 +17,7 @@ public class TreeVisitor
         extends LangBaseVisitor<String> {
 
     private Scope currentScope = Scope.GLOBAL;
-    private boolean continueParsing = true;
+    private Robot robot = Robot.getInstance();
 
     @Override
     public String visitMoveLeft(LangParser.MoveLeftContext ctx) {
@@ -43,6 +44,16 @@ public class TreeVisitor
     }
 
     @Override
+    public String visitCreatePortal(LangParser.CreatePortalContext ctx) {
+        return super.visitCreatePortal(ctx);
+    }
+
+    @Override
+    public String visitTeleport(LangParser.TeleportContext ctx) {
+        return super.visitTeleport(ctx);
+    }
+
+    @Override
     public String visitAddOp(LangParser.AddOpContext ctx) {
         try {
             if (ctx.op.getText().equals("+")) {
@@ -52,7 +63,6 @@ public class TreeVisitor
             }
         } catch (RuntimeLangException e) {
             System.out.println(e.getType());
-            continueParsing = false;
         }
         return null;
     }
@@ -79,7 +89,6 @@ public class TreeVisitor
             return toS(getVariable(ctx.getChild(1).getText()).getLength());
         } catch (RuntimeLangException e) {
             System.out.println(e.getType());
-            continueParsing = false;
         }
         return "1";
     }
@@ -102,7 +111,6 @@ public class TreeVisitor
             }
         } catch (RuntimeLangException e) {
             System.out.println(e.getType());
-            continueParsing = false;
         }
         return null;
     }
@@ -132,7 +140,6 @@ public class TreeVisitor
             }
         } catch (RuntimeLangException e) {
             System.out.println(e.getType());
-            continueParsing = false;
         }
         return null;
     }
@@ -150,7 +157,6 @@ public class TreeVisitor
                     constAddress));
         } catch (RuntimeLangException e) {
             System.out.println(e.getType());
-            continueParsing = false;
         }
         return null;
     }
@@ -165,7 +171,6 @@ public class TreeVisitor
                     type, value, isConstant));
         } catch (RuntimeLangException e) {
             System.out.println(e.getType());
-            continueParsing = false;
         }
         return null;
     }
@@ -180,7 +185,6 @@ public class TreeVisitor
                     size, constSize));
         } catch (RuntimeLangException e) {
             System.out.println(e.getType());
-            continueParsing = false;
         }
         return null;
     }
@@ -219,11 +223,9 @@ public class TreeVisitor
                 return toS(variable.getValue());
             } else {
                 System.out.println(RuntimeLangException.Type.INVALID_LENGTH);
-                continueParsing = false;
             }
         } catch (RuntimeLangException e) {
             System.out.println(e.getType());
-            continueParsing = false;
         }
         return "0";
     }
@@ -234,7 +236,6 @@ public class TreeVisitor
             return toS(getVariable(ctx.getChild(0).getText()).getValue());
         } catch (RuntimeLangException e) {
             System.out.println(e.getType());
-            continueParsing = false;
         }
         return "0";
     }
@@ -250,7 +251,6 @@ public class TreeVisitor
             }
         } catch (RuntimeLangException e) {
             System.out.println(e.getType());
-            continueParsing = false;
         }
         return "0";
     }
@@ -262,7 +262,6 @@ public class TreeVisitor
             return toS(currentScope.getVariableAddress(variable));
         } catch (RuntimeLangException e) {
             System.out.println(e.getType());
-            continueParsing = false;
         }
         return "0";
     }
@@ -276,7 +275,6 @@ public class TreeVisitor
                     type, null, isConstant));
         } catch (RuntimeLangException e) {
             System.out.println(e.getType());
-            continueParsing = false;
         }
         return null;
     }
@@ -293,7 +291,6 @@ public class TreeVisitor
                     constAddress));
         } catch (RuntimeLangException e) {
             System.out.println(e.getType());
-            continueParsing = false;
         }
         return null;
     }
@@ -308,7 +305,6 @@ public class TreeVisitor
                             constSize));
         } catch (RuntimeLangException e) {
             System.out.println(e.getType());
-            continueParsing = false;
         }
         return null;
     }
@@ -325,7 +321,6 @@ public class TreeVisitor
             variable = getVariable(ctx.getChild(0).getChild(1).getText());
         } catch (RuntimeLangException e) {
             System.out.println(e.getType());
-            continueParsing = false;
         }
         List<Variable> args = new ArrayList<>();
         List<Class> types = new ArrayList<>();
@@ -376,7 +371,6 @@ public class TreeVisitor
             }
         } catch (RuntimeLangException e) {
             System.out.println(e.getType());
-            continueParsing = false;
             currentScope = currentScope.getParent();
         }
         return null;
@@ -413,7 +407,6 @@ public class TreeVisitor
             result = visit(functionTree);
         } catch (RuntimeLangException e) {
             System.out.println(e.getType());
-            continueParsing = false;
         }
         currentScope = currentScope.getParent();
         return result;
@@ -450,7 +443,6 @@ public class TreeVisitor
             result = visit(functionTree);
         } catch (RuntimeLangException e) {
             System.out.println(e.getType());
-            continueParsing = false;
         }
         currentScope = currentScope.getParent();
         return result;
@@ -470,7 +462,6 @@ public class TreeVisitor
                     ctx.getChild(0).getChild(1));
         } catch (RuntimeLangException e) {
             System.out.println(e.getType());
-            continueParsing = false;
         }
         return null;
     }
@@ -571,7 +562,6 @@ public class TreeVisitor
                 return Byte.class;
         }
         System.out.println("No such type: " + string);
-        continueParsing = false;
         return Integer.class;
     }
 
