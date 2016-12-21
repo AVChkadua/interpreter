@@ -32,7 +32,7 @@ public class MazeCell {
 
     @Override
     public int hashCode() {
-        return Integer.hashCode(x) + Integer.hashCode(y);
+        return Integer.hashCode(x) - Integer.hashCode(y);
     }
 
     @Override

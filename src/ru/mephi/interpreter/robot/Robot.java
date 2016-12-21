@@ -18,6 +18,7 @@ public class Robot {
         this.y = y;
         this.maze = maze;
         this.exits = maze.getExits();
+        visited.add(new MazeCell(x, y));
     }
 
     static void createRobot(int x, int y, Maze maze) {
@@ -30,6 +31,7 @@ public class Robot {
 
     public String top() {
         if (canMoveTop()) {
+            System.out.println("top");
             y += 1;
             visited.add(new MazeCell(x, y));
             return "1";
@@ -39,6 +41,7 @@ public class Robot {
 
     public String bottom() {
         if (canMoveBottom()) {
+            System.out.println("bottom");
             y -= 1;
             visited.add(new MazeCell(x, y));
             return "1";
@@ -48,7 +51,8 @@ public class Robot {
 
     public String left() {
         if (canMoveLeft()) {
-            y -= 1;
+            System.out.println("left");
+            x -= 1;
             visited.add(new MazeCell(x, y));
             return "1";
         }
@@ -57,6 +61,7 @@ public class Robot {
 
     public String right() {
         if (canMoveRight()) {
+            System.out.println("right");
             x += 1;
             visited.add(new MazeCell(x, y));
             return "1";
@@ -97,10 +102,12 @@ public class Robot {
     }
 
     public void createTeleport() {
+        System.out.println("create teleport " + x + " : " + y);
         maze.createTeleport(new MazeCell(x, y));
     }
 
     public void teleport() {
+        System.out.println("teleport");
         MazeCell cellWithLastTeleport = maze.teleport();
         x = cellWithLastTeleport.getX();
         y = cellWithLastTeleport.getY();
@@ -108,6 +115,6 @@ public class Robot {
 
 
     public boolean checkIfAtExit() {
-        return exits.contains(new MazeCell(x,y));
+        return exits.contains(new MazeCell(x, y));
     }
 }
