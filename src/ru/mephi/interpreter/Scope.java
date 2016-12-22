@@ -14,20 +14,42 @@ public class Scope {
 
     static Scope GLOBAL = new Scope(null);
     private Scope parent;
-    private BigInteger memoryCounter = BigInteger.ZERO;
     private Map<BigInteger, Variable> variables = new HashMap<>();
     private Map<Function, ParseTree> functions = new HashMap<>();
+    private BigInteger memoryCounter = BigInteger.ZERO;
 
     Scope(Scope parent) {
         this.parent = parent;
+        if (parent != null) {
+            memoryCounter = parent.getMemoryCounter();
+        }
+    }
+
+    private BigInteger getMemoryCounter() {
+        return memoryCounter;
     }
 
     void add(Variable variable) throws RuntimeLangException {
         if (variables.values().contains(variable)) {
             throw new RuntimeLangException(RuntimeLangException.Type.DUPLICATE_IDENTIFIER);
         }
-        variables.put(memoryCounter, variable);
-        memoryCounter = memoryCounter.add(BigInteger.ONE);
+        if (variable instanceof Array) {
+            ((Array) variable).setScope(this);
+            for (int i = 0; i < ((Array) variable).memoryLength; i++) {
+                variables.put(memoryCounter, variable);
+                memoryCounter = memoryCounter.add(BigInteger.ONE);
+            }
+        } else {
+            variables.put(memoryCounter, variable);
+            memoryCounter = memoryCounter.add(BigInteger.ONE);
+        }
+    }
+
+    public void remove(String name) throws RuntimeLangException {
+        Variable toBeRemoved = get(name);
+        BigInteger address = variables.keySet().stream().filter(key -> variables.get(key).equals(toBeRemoved)).findFirst().orElseThrow(() -> new RuntimeLangException(
+                RuntimeLangException.Type.NO_SUCH_VARIABLE));
+        variables.remove(address);
     }
 
     Scope getParent() {
@@ -49,7 +71,16 @@ public class Scope {
     }
 
     Variable getByAddress(Pointer pointer) throws RuntimeLangException {
-        return variables.get(pointer.getValue());
+        Variable variable = variables.get(pointer.getValue());
+        System.out.println(variable);
+        if (variable instanceof Array)
+        {
+            int address = getVariableAddress(variable).intValue();
+            int index = pointer.getValue().intValue() - address;
+            return variable.getElement(index);
+        } else {
+            return variable;
+        }
     }
 
     void setValueByAddress(Pointer pointer, BigInteger value) throws RuntimeLangException {

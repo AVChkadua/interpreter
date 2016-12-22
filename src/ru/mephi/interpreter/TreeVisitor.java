@@ -218,10 +218,10 @@ public class TreeVisitor
                 }
                 variable.setValue(toI(visit(ctx.getChild(2))));
             } else if (variable instanceof SimpleVariable) {
-                variable.setValue(toI(visit(ctx.getChild(2))));
+                variable.setValue(extractResult(variable.getType(), visit(ctx.getChild(2))));
             } else if (variable instanceof Pointer) {
                 if (ctx.getChild(0).getChild(0).getText().contains("*")) {
-                    currentScope.setValueByAddress((Pointer) variable, toI(visit(ctx.getChild(2))));
+                    currentScope.setValueByAddress((Pointer) variable, extractResult(variable.getType(), visit(ctx.getChild(2))));
                 } else if (ctx.getChild(0).getChild(0).getText().contains("&")) {
                     variable.setAddress(toI(visit(ctx.getChild(2))));
                 }
@@ -240,7 +240,8 @@ public class TreeVisitor
                 ctx.getChild(0).getChild(1 + (constAddress ? 1 : 0)).getText().toLowerCase().equals("const");
         int childCount = ctx.getChild(0).getChildCount() - 1;
         try {
-            BigInteger value = toI(visit(ctx.getChild(2)));
+            String result = visit(ctx.getChild(2));
+            BigInteger value = extractResult(type, result);
             currentScope.add(new Pointer(ctx.getChild(0).getChild(childCount).getText(), type, constValue, value,
                     constAddress));
         } catch (RuntimeLangException e) {
@@ -254,7 +255,8 @@ public class TreeVisitor
         boolean isConstant = ctx.getChild(0).getChild(0).getText().toLowerCase().equals("const");
         Class type = getVariableClass(ctx.getChild(0).getChild(ctx.getChild(0).getChildCount() - 2).getText());
         try {
-            BigInteger value = toI(visit(ctx.getChild(2)));
+            String result = visit(ctx.getChild(2));
+            BigInteger value = extractResult(type, result);
             currentScope.add(new SimpleVariable(ctx.getChild(0).getChild(ctx.getChild(0).getChildCount() - 1).getText(),
                     type, value, isConstant));
         } catch (RuntimeLangException e) {
@@ -528,7 +530,7 @@ public class TreeVisitor
                             args.get(i).getValue(), false));
                 }
             }
-            result = visit(functionTree);
+            result = func.returnType + ":" + visit(functionTree);
         } catch (RuntimeLangException e) {
             System.out.println(e.getType());
         }
@@ -638,10 +640,13 @@ public class TreeVisitor
     private Class getVariableClass(String string) {
         switch (string) {
             case "int":
+            case "Integer":
                 return Integer.class;
             case "long":
+            case "Long":
                 return Long.class;
             case "byte":
+            case "Byte":
                 return Byte.class;
         }
         System.out.println("No such type: " + string);
@@ -658,5 +663,16 @@ public class TreeVisitor
 
     private String toS(BigInteger i) {
         return i.toString();
+    }
+
+    private BigInteger extractResult(Class type, String result) throws RuntimeLangException {
+        if (result.contains(":")) {
+            Class resultType = getVariableClass(result.substring(result.lastIndexOf('.') + 1, result.indexOf(':')));
+            if (!resultType.equals(type)) throw new RuntimeLangException(
+                    RuntimeLangException.Type.ILLEGAL_MODIFICATION);
+            return toI(result.substring(result.indexOf(":") + 1));
+        } else {
+            return  toI(result);
+        }
     }
 }

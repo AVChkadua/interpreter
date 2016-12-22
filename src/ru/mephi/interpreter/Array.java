@@ -11,12 +11,15 @@ class Array
 
     private ArrayList<Variable> content;
     private int quant = 4;
+    int memoryLength = 4;
+    private Scope scope;
 
     Array(String name, Class type, Integer size, boolean isConstant) throws RuntimeLangException {
         super(name, type, isConstant);
         if (size != null) {
             content = new ArrayList<>(size);
             quant = size;
+            memoryLength = size;
         } else if (isConstant) {
             throw new RuntimeLangException(RuntimeLangException.Type.NO_VALUE_SPECIFIED);
         } else {
@@ -43,9 +46,12 @@ class Array
     Variable getElement(int i) throws RuntimeLangException {
         if (i > content.size()) throw new RuntimeLangException(RuntimeLangException.Type.INVALID_LENGTH);
         if (i == content.size()) {
-            ArrayList<Variable> oldContent = content;
-            content = new ArrayList<>(oldContent.size() + quant);
-            content.addAll(oldContent);
+            if (i == memoryLength) {
+                ArrayList<Variable> oldContent = content;
+                content = new ArrayList<>(oldContent.size() + quant);
+                memoryLength += quant;
+                content.addAll(oldContent);
+            }
             Variable newElement = new SimpleVariable("element", type, null, false);
             content.add(newElement);
         }
@@ -64,5 +70,9 @@ class Array
     @Override
     void setAddress(BigInteger address) throws RuntimeLangException {
         throw new RuntimeLangException(RuntimeLangException.Type.ILLEGAL_MODIFICATION);
+    }
+
+    void setScope(Scope scope) {
+        this.scope = scope;
     }
 }
